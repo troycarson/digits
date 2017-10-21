@@ -2,6 +2,7 @@ import { Template } from 'meteor/templating';
 import { Tracker } from 'meteor/tracker';
 import { ReactiveDict } from 'meteor/reactive-dict';
 import { _ } from 'meteor/underscore';
+import { FlowRouter } from 'meteor/kadira:flow-router';
 import { Contacts, ContactsSchema } from '../../api/contacts/contacts.js';
 
 /* eslint-disable no-param-reassign */
@@ -30,39 +31,24 @@ Template.Add_Contact_Page.events({
   'submit .contact-data-form'(event, instance) {
     event.preventDefault();
     // Get name (text field)
-    const name = event.target.Name.value;
-    // Get bio (text area).
-    const bio = event.target.Bio.value;
-    // Get hobbies (checkboxes, zero to many)
-    const hobbies = [];
-    _.each(hobbyList, function setHobby(hobby) {
-      if (event.target[hobby].checked) {
-        hobbies.push(event.target[hobby].value);
-      }
-    });
-    // Get level (radio buttons, exactly one)
-    const level = event.target.Level.value;
-    // Get GPA (single selection)
-    const gpa = event.target.GPA.value;
-    // Get Majors (multiple selection)
-    const selectedMajors = _.filter(event.target.Majors.selectedOptions, (option) => option.selected);
-    const majors = _.map(selectedMajors, (option) => option.value);
+    const first = event.target.First.value;
+    const last = event.target.Last.value;
+    const address = event.target.Address.value;
+    const telephone = event.target.Telephone.value;
+    const email = event.target.Email.value;
 
-    const newStudentData = { name, bio, hobbies, level, gpa, majors };
+    const newContactData = { first, last, address, telephone, email };
     // Clear out any old validation errors.
     instance.context.reset();
-    // Invoke clean so that newStudentData reflects what will be inserted.
-    const cleanData = StudentDataSchema.clean(newStudentData);
+    // Invoke clean so that newContactData reflects what will be inserted.
+    ContactsSchema.clean(newContactData);
     // Determine validity.
-    instance.context.validate(cleanData);
+    instance.context.validate(newContactData);
     if (instance.context.isValid()) {
-      const id = StudentData.insert(cleanData);
-      instance.messageFlags.set(displaySuccessMessage, id);
+      Contacts.insert(newContactData);
       instance.messageFlags.set(displayErrorMessages, false);
-      instance.find('form').reset();
-      instance.$('.dropdown').dropdown('restore defaults');
+      FlowRouter.go('Home_Page');
     } else {
-      instance.messageFlags.set(displaySuccessMessage, false);
       instance.messageFlags.set(displayErrorMessages, true);
     }
   },
